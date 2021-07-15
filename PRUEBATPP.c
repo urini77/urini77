@@ -1,311 +1,322 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-//------------------Registro para guardar el ID de las películas y sus nombres correspondientes
-struct Peli{
-    int ID;
+/****************************** ESTRUCTURAS ******************************/
+
+// Registro para guardar el ID de las pelculas y sus nombres correspondientes
+struct Pelicula {
+    int id;
     char nombre[60];
 };
 
-//------------------Registro para guardar el ID, Dia, cantidad de visualizaciones y valoracion de las peliculas
-struct Datos7D{
-    int ID;
-    int Dia;
-    int Vis;
-    float Val;
+// Registro para guardar el ID, dia, cantidad de visualizaciones y valoracion de las peliculas
+struct Datos7D {
+    int id;
+    int dia;
+    int vis;
+    float val;
 };
 
-//------------------Registro para guardar el Ranking de peliculas
-struct RankingTot{
-    int ID;
-    int VisT;
+// Registro para guardar el ranking de peliculas
+struct RankedPeli {
+    int id;
+    int totVis;
 };
 
-//------------------Cuenta la cantidad de lineas en el archivo datos_7dias.txt
-int countlines(){
-    int lines = 0, ch = 0;
-    FILE *ultdias;
-    ultdias = fopen("datos_7dias.txt","r");
-    while(!feof(ultdias)){
+// Registro para guardar el dia con mas visualizaciones
+struct visXdia {
+    char nombreDia[10];
+    int vis;
+};
+
+/*************************************************************************/
+
+/******************************* FUNCIONES *******************************/
+
+// Cuenta la cantidad de lineas del archivo "datos_7dias.txt"
+int contarDatos() {
+    int lineas = 0, ch = 0;
+    FILE *ultdias = fopen("datos_7dias.txt", "r");
+    while( !feof(ultdias) ) {
         ch = fgetc(ultdias);
-        if(ch == '\n'){
-            lines++;
-        }
+        if(ch == '\n') lineas++;
     }
     fclose(ultdias);
-    return(lines);
+    
+    return lineas;
 }
 
-//------------------Crea un archivo de texto llamado top10.txt en el que almacenará el top 10 de peliculas más vistas
-void GRABAR_TOP10(struct RankingTot RankingT[], struct Peli Pel[]){
-    FILE *top10;
-    int j = 0;
-    top10 = fopen("top10.txt","w");
+// Inicializar el arreglo de las peliculas
+void inicPelis(struct Pelicula pelis[]) {
+    FILE *peliculas = fopen("peliculas.txt", "r");
+    for(int i = 0; !feof(peliculas); i++)
+        fscanf(peliculas, "%d %s", &pelis[i].id, pelis[i].nombre);
+    fclose(peliculas);
+}
 
-    for(int i = 0 ; i < 10 ; i++){
-        j = 0;
-        while(RankingT[i].ID != Pel[j].ID){//------------------Busca el nombre de la película con su ID
-            j++;
+// Inicializar el arreglo de los ultimos 7 dias
+void inicUlt7Dias(struct Datos7D ult7dias[]) {
+    FILE *ultimosdias = fopen("datos_7dias.txt", "r");
+    for(int i = 0; !feof(ultimosdias); i++)
+        fscanf(ultimosdias, "%d %d %d %f", &ult7dias[i].id, &ult7dias[i].dia, &ult7dias[i].vis, &ult7dias[i].val);
+    fclose(ultimosdias);
+}
+
+// Inicializo los dias de la semana con su nombre correspondiente y las visualizaciones en 0
+void inicDias(struct visXdia dias[]) {
+    for(int i = 0; i < 7; i++) {
+        dias[i].vis = 0;
+        switch(i) {
+            case 0:
+                strcpy(dias[i].nombreDia, "Lunes");
+                break;
+            case 1:
+                strcpy(dias[i].nombreDia, "Martes");
+                break;
+            case 2:
+                strcpy(dias[i].nombreDia, "Miercoles");
+                break;
+            case 3:
+                strcpy(dias[i].nombreDia, "Jueves");
+                break;
+            case 4:
+                strcpy(dias[i].nombreDia, "Viernes");
+                break;
+            case 5:
+                strcpy(dias[i].nombreDia, "Sabado");
+                break;
+            case 6:
+                strcpy(dias[i].nombreDia, "Domingo");
+                break;
         }
-        fprintf(top10, "ID: %d | Nombre: %s | Visualizaciones Totales: %d\n",RankingT[i].ID,Pel[j].nombre,RankingT[i].VisT);
     }
+}
+
+// Muestra el menu. Posee un parametro para determinar si dar la bienvenida o no
+void mostrarMenu(int bienvenida) {
+    printf("\n--- MENU PRINCIPAL ---\n\n");
+    if( bienvenida )
+        printf("Bienvenido/a! ");
+    printf("Escoja una opcion ingresando el numero correspondiente:\n");
+    printf("\t1) Ranking y Top 10\n");
+    printf("\t2) Valoracion semanal\n");
+    printf("\t3) Filtro por cantidad\n");
+    printf("\t4) Pico de visualizaciones\n");
+    printf("\t0) Finalizar\n\n");
+}
+
+// Intercambia dos entradas del ranking
+void swap(struct RankedPeli *a, struct RankedPeli *b) {
+    struct RankedPeli temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Implementacion de Bubble Sort para ordenar el ranking de mas a menos visualizaciones
+void bubbleSort(struct RankedPeli rank[]) {
+    for(int i = 0; i < 100; i++)
+        for(int j = 0; j < 100 - i; j++)
+            if( rank[j].totVis < rank[j+1].totVis )
+                swap(&rank[j], &rank[j+1]);
+}
+
+// Guarda el top 10 peliculas mas vista en un archivo 'top10.txt'
+void GRABAR_TOP10(struct RankedPeli rankingTot[], struct Pelicula pelis[]) {
+    FILE *top10 = fopen("top10.txt", "w");
+
+    int j;
+    for(int i = 0; i < 10; i++) {
+        // Busco el nombre de la pelicula segun su ID
+        for(j = 0; rankingTot[i].id != pelis[j].id; j++);
+        // Escribo todo en el archivo
+        fprintf(top10, "ID: %d\t|\tNombre: %s\t|\tVisualizaciones totales: %d\n", rankingTot[i].id, pelis[j].nombre, rankingTot[i].totVis);
+    }
+    
     fclose(top10);
 }
 
-//------------------Muestra en pantalla todas las películas ordenadas de más a menos vistas
-void RANKING(struct Peli Pel[], struct Datos7D DatosUltDias[], int size){
-    int i, j;
-    struct RankingTot RankingT[100];
+// Muestra en pantalla todas las peliculas ordenadas de mas a menos visualizaciones
+void RANKING(struct Pelicula pelis[], struct Datos7D ult7dias[], int cantDatos){
+    struct RankedPeli rankingTot[100];
 
-    for(i = 0; i < 100 ; i++){//------------------Llena el registro con 0
-        RankingT[i].VisT = 0;
+    // Inicializo las visitas totales en 0
+    for(int i = 0; i < 100 ; i++)
+        rankingTot[i].totVis = 0;
+
+    // Ubico las 100 peliculas por ID con su cantidad de visualizaciones totales en el ranking
+    for(int i = 0; i < 100; i++) {
+        rankingTot[i].id = pelis[i].id;
+        for(int j = 0; j < cantDatos; j++)
+            if( pelis[i].id == ult7dias[j].id )
+                rankingTot[i].totVis += ult7dias[j].vis;
     }
 
-    for(i = 0 ; i < 100 ; i++){//------------------Ubica las 100 películas por ID con su cantidad de visualizaciones totales
-        RankingT[i].ID = Pel[i].ID;
-        for(j = 0 ; j < size ; j++){
-            if(Pel[i].ID == DatosUltDias[j].ID){
-                RankingT[i].VisT = RankingT[i].VisT + DatosUltDias[j].Vis;
-            }
-        }
-    }
+    // Y ahora ordeno el ranking
+    bubbleSort(rankingTot);
 
-    int swapID, swapVisT;
-    for(i = 0 ; i < 100 ; i++){//------------------Bubble Sorting de mayor a menor cantidad de visualizaciones
-        for(j = 0 ; j < 100 - i ; j++){
-            if(RankingT[j].VisT < RankingT[j+1].VisT){
-                swapVisT = RankingT[j].VisT;
-                RankingT[j].VisT = RankingT[j+1].VisT;
-                RankingT[j+1].VisT = swapVisT;
-                swapID = RankingT[j].ID;
-                RankingT[j].ID = RankingT[j+1].ID;
-                RankingT[j+1].ID = swapID;
-            }
-        }
+    printf("--- RANKING ---\n\n");
+    char vis[30];
+    for(int i = 0; i < 100; i++) {
+        printf("ID: %5d  |  Visualizaciones: %5d\n", rankingTot[i].id, rankingTot[i].totVis);
     }
+    printf("\n");
 
-    for(i = 0 ; i < 100 ; i++){
-        printf("ID: %d | Visualizaciones: %d \n",RankingT[i].ID,RankingT[i].VisT);
-    }
-
-    GRABAR_TOP10(RankingT, Pel);
+    GRABAR_TOP10(rankingTot, pelis);
 }
 
-//------------------Muestra en pantalla una valoración media de una película pedida mediante su ID
-float VALORACION_PONDERADA(struct Peli Pel[], struct Datos7D DatosUltDias[], int size, int IDPeli){
-    char nombre[60];
-    float ValoracionPond = 0;
-    int CantVis = 0, i;
+// Calcula la valoracion ponderada de una pelicula basandose en los datos de la ultima semana
+float VALORACION_PONDERADA(struct Datos7D ult7dias[], int cantDatos, int idPeli) {
+    float sumaPond = 0.0;
+    int ponderacion = 0;
 
-    for(i = 0 ; i < 100 ; i++){//------------------Busca el nombre de la película con su ID y lo guarda
-        if(IDPeli == Pel[i].ID){
-            strcpy(nombre,Pel[i].nombre);
-            break;
+    // Obtiene los nros. necesarios para calcular la valoracion ponderada
+    for(int i = 0; i < cantDatos; i++)
+        if( idPeli == ult7dias[i].id ) {
+            sumaPond += (ult7dias[i].val * ult7dias[i].vis);
+            ponderacion += ult7dias[i].vis;
         }
-    }
 
-    for(i = 0 ; i < size ; i++){//------------------Obtiene los números necesarios para calcular la valoración ponderada
-        if(IDPeli == DatosUltDias[i].ID){
-            ValoracionPond = ValoracionPond + (DatosUltDias[i].Val * DatosUltDias[i].Vis);
-            CantVis = CantVis + DatosUltDias[i].Vis;
-        }
-    }
-
-    if(ValoracionPond != 0){
-        ValoracionPond = ValoracionPond/CantVis;
-    }
-    printf("La valoracion semanal de la pelicula %d - %s es: ", IDPeli, nombre);
-    return(ValoracionPond);
+    // Calculo la valoracion ponderada
+    float valPond;
+    if( ponderacion != 0 )
+        valPond = sumaPond / (ponderacion * 1.0);
+    else
+        valPond = -1.0;
+    
+    return valPond;
 }
 
-//------------------Muestra cual día de la semana fue el que tuvo mas visualizaciones de películas
-void DIA_MAS(struct Datos7D DatosUltDias[], int size){
-    int Dia[7][2], swapNDia, swap, i, j;
+// Muestra en que dia de la semana hubo mas visualizaciones
+void DIA_MAS(struct Datos7D ult7Dias[], int cantDatos) {
+    struct visXdia dias[7];
+    inicDias(dias);
 
-    for(i = 0 ; i < 7 ; i++){//------------------LLena la matriz con 0 en los lugares de visualiz. y con 1 a 7 en los otros espacios
-        Dia[i][0] = 0;
-        Dia[i][1] = i + 1;
+    // Relleno las visualizaciones por cada dia
+    int dia;
+    for(int i = 0; i < cantDatos; i++) {
+        dia = ult7Dias[i].dia - 1;
+        dias[dia].vis += ult7Dias[i].vis;
     }
 
-    for(i = 0 ; i < size ; i++){//------------------OBtiene la cantidad de visualizaciones en la semana por día
-        switch(DatosUltDias[i].Dia){
-            case 1:
-                Dia[0][0] = Dia[0][0] + DatosUltDias[i].Vis;
-                break;
-            case 2:
-                Dia[1][0] = Dia[1][0] + DatosUltDias[i].Vis;
-                break;
-            case 3:
-                Dia[2][0] = Dia[2][0] + DatosUltDias[i].Vis;
-                break;
-            case 4:
-                Dia[3][0] = Dia[3][0] + DatosUltDias[i].Vis;
-                break;
-            case 5:
-                Dia[4][0] = Dia[4][0] + DatosUltDias[i].Vis;
-                break;
-            case 6:
-                Dia[5][0] = Dia[5][0] + DatosUltDias[i].Vis;
-                break;
-            case 7:
-                Dia[6][0] = Dia[6][0] + DatosUltDias[i].Vis;
-                break;
+    // Busco el mayor numero de visualizaciones
+    int visMax = dias[0].vis;
+    for(int i = 1; i < 7; i++)
+        if( dias[i].vis > visMax )
+            visMax = dias[i].vis;
+    
+    // Y ahora busco el dia al que corresponde dicho nro. de visualizaciones
+    for(int i = 0; i < 7; i++)
+        if( dias[i].vis == visMax ) {
+            printf("El dia con mas visualizaciones fue el %s, con %d visualizaciones.\n\n", dias[i].nombreDia, visMax);
         }
-    }
-
-    for(i = 0 ; i < 7 ; i++){//------------------Bubble Sorting para obtener el día en el que más visualizaciones hubieron
-        for(j = 0 ; j < 7 - i ; j++){
-            if(Dia[j][0] < Dia[j + 1][0]){
-                swapNDia = Dia[j][0];
-                Dia[j][0] = Dia[j + 1][0];
-                Dia[j + 1][0] = swapNDia;
-                swap = Dia[j][1];
-                Dia[j][1] = Dia[j + 1][1];
-                Dia[j + 1][1] = swap;
-            }
-        }
-    }
-
-    switch(Dia[0][1]){//------------------Muestra en la pantalla el resultado dependiendo del número del día
-        case 1:
-            printf("El dia que hubieron mas visualizaciones fue el Lunes\n\n");
-            break;
-        case 2:
-            printf("El dia que hubieron mas visualizaciones fue el Martes\n\n");
-            break;
-        case 3:
-            printf("El dia que hubieron mas visualizaciones fue el Miercoles\n\n");
-            break;
-        case 4:
-            printf("El dia que hubieron mas visualizaciones fue el Jueves\n\n");
-            break;
-        case 5:
-            printf("El dia que hubieron mas visualizaciones fue el Viernes\n\n");
-            break;
-        case 6:
-            printf("El dia que hubieron mas visualizaciones fue el Sabado\n\n");
-            break;
-        case 7:
-            printf("El dia que hubieron mas visualizaciones fue el Domingo\n\n");
-            break;
-    }
 }
 
-int main(){
-    int i = -1, j, lines, IDPeli, b, VisMax, CantVis = 0, band = 0;
-    float ValPond;
-    struct Peli Pel[100];
-    FILE *peliculas, *ultdias;
+/*************************************************************************/
 
-    peliculas = fopen("peliculas.txt","r");
-    ultdias = fopen("datos_7dias.txt","r");
+int main() {
+    struct Pelicula pelis[100];
+    int cantDatos = contarDatos();
+    struct Datos7D ult7dias[cantDatos];
 
-    //------------------Guarda los datos del archivo peliculas.txt en el registro Pel
-    while(!feof(peliculas)){
-        i++;
-        fscanf(peliculas,"%d %s",&Pel[i].ID,Pel[i].nombre);
-    }
-    fclose(peliculas);
+    // Inicializo ambos arreglos
+    inicPelis(pelis);
+    inicUlt7Dias(ult7dias);
 
-    lines = countlines();
-    struct Datos7D DatosUltDias[lines];
-    i = -1;
-
-    //------------------Guarda los datos del archivo datos_7dias.txt en el registro DatosUltDias
-    while(!feof(ultdias)){
-        i++;
-        fscanf(ultdias,"%d %d %d %f",&DatosUltDias[i].ID,&DatosUltDias[i].Dia,&DatosUltDias[i].Vis,&DatosUltDias[i].Val);
-    }
-    fclose(ultdias);
-
-    printf("Ingrese un numero para elegir entre las siguientes opciones: \n");
-    printf("1) Ranking y Top 10\n");
-    printf("2) Valoracion semanal\n");
-    printf("3) Filtro por cantidad\n");
-    printf("4) Pico de visualizaciones\n");
-    printf("0) Finalizar\n");
-
-    int Opcion;
-    scanf("%d",&Opcion);
-
-    //------------------Menú con sus opciones correspondientes
-    while(Opcion != 0){
-        while(Opcion != 0 && Opcion != 1 && Opcion != 2 && Opcion != 3 && Opcion != 4){
-            printf("Numero invalido, reingrese valor: ");
-            scanf("%d",&Opcion);
+    int opcion, bienvenida = 1;
+    // Empieza la interaccion con el usuario
+    do {
+        mostrarMenu(bienvenida);
+        bienvenida = 0;
+        printf("Ingrese aqui la opcion deseada: ");
+        scanf("%d", &opcion);
+        printf("\n");
+        // Valido que la entrada sea correcta
+        while( !(opcion >= 0 && opcion <= 4) ) {
+            printf("La opcion ingresada no es valida, intente otra vez: ");
+            scanf("%d", &opcion);
         }
-        switch (Opcion){
 
-            case 0:{
+        // Luego de ingresar la opcion, ejecuto la subrutina elegida
+        switch(opcion) {
+            // Opcion FINALIZAR seleccionada
+            case 0:
+                break;
+            
+            // Opcion RANKING Y TOP 10 seleccionada
+            case 1: {
+                RANKING(pelis, ult7dias, cantDatos);
                 break;
             }
-
-            case 1:{
-                RANKING(Pel, DatosUltDias, lines);
-                break;
-            }
-
-            case 2:{
-                b = 0;
-                printf("Ingrese ID de la pelicula: ");
-                scanf("%d",&IDPeli);
-                for(i = 0 ; i < 100 ; i++){
-                    if(Pel[i].ID == IDPeli){
-                        b = 1;
+            
+            // Opcion VALORACION SEMANAL seleccionada
+            case 2: {
+                int idPeli, peliExiste = 0;
+                float valPond;
+                printf("\nIngrese el ID de la pelicula cuya valoracion desea calcular: ");
+                scanf("%d", &idPeli);
+                
+                // Verifico que exista la pelicula en la base de datos
+                for(int i = 0; i < 100; i++)
+                    if( idPeli == pelis[i].id ) {
+                        peliExiste = 1;
                         break;
                     }
+
+                // Si existe, calculo y muestra la valoracion semanal
+                if( peliExiste ) {
+                    valPond = VALORACION_PONDERADA(ult7dias, cantDatos, idPeli);
+                    printf("La valoracion semanal de la pelicula %d - ", idPeli);
+                    for(int i = 0; i < 100; i++)
+                        if( idPeli == pelis[i].id ) {
+                            printf("%s", pelis[i].nombre);
+                            break;
+                        }
+                    printf(" es: %.1f\n\n", valPond);
                 }
-                if(b == 1){
-                    ValPond = VALORACION_PONDERADA(Pel, DatosUltDias, lines, IDPeli);
-                    printf("%0.1f \n\n", ValPond);
-                }
-                else {
-                    printf("El ID ingresado no existe\n\n");
-                }
+                // Si no, vuelvo al menu principal
+                else
+                    printf("El ID ingresado no existe. Sera redirigido al menu principal.\n\n");
+
                 break;
             }
-
-            case 3:{//------------------Dada una cantidad de visualizaciones por el usuario, muestra en pantalla las películas que superen esa cantidad
-                printf("Ingrese una cantidad total de visualizaciones: ");
-                scanf("%d",&VisMax);
-                band = 0;
-                for(i = 0 ; i < 100 ; i++){
-                    CantVis = 0;
-                    for(j = 0 ; j < lines ; j++){//------------------Calcula la cantidad de visualizaciones por película y compara
-                        if(Pel[i].ID == DatosUltDias[j].ID){
-                            CantVis = CantVis + DatosUltDias[j].Vis;
-                        }
-                    }
-                    if(CantVis > VisMax){
-                        if(band == 0){
-                            printf("Las siguientes peliculas superan la cantidad de visualicaciones ingresadas: \n");
-                        }
-                        band = 1;
-                        printf("%s | %d\n",Pel[i].nombre,CantVis);
+            
+            // Opcion FILTRO POR CANTIDAD seleccionada
+            case 3: {
+                int visMax, cantVis, ninguna = 1;
+                printf("Ingrese una cantidad de visualizaciones: ");
+                scanf("%d", &visMax);
+                
+                printf("Las siguientes peliculas superan las %d visualicaciones:\n", visMax);
+                for(int i = 0; i < 100 ; i++) {
+                    cantVis = 0;
+                    // Calculo la cantidad de visualizaciones de cada pelicula
+                    for(int j = 0; j < cantDatos; j++)
+                        if( pelis[i].id == ult7dias[j].id )
+                            cantVis += ult7dias[j].vis;
+                    // Si superan la cantidad ingresada, muestro su nombre y sus visualizaciones
+                    if( cantVis > visMax ) {
+                        ninguna = 0;
+                        printf("%-60s|  %-8d\n", pelis[i].nombre, cantVis);
                     }
                 }
-                if(band == 0){
+
+                // Si ninguna pelicula supera las visualizaciones ingresadas, aviso
+                if( ninguna )
                     printf("Ningun titulo fue visto tantas veces!\n\n");
-                }
+                else
+                    printf("\n");
+                
                 break;
             }
 
-            case 4:{
-                DIA_MAS(DatosUltDias, lines);
+            // Opcion PICO DE VISUALIZACIONES seleccionada
+            case 4: {
+                DIA_MAS(ult7dias, cantDatos);
                 break;
             }
         }
 
-    printf("\n");
-    printf("Ingrese un numero nuevamente: \n");
-    printf("1) Ranking y Top 10\n");
-    printf("2) Valoracion semanal\n");
-    printf("3) Filtro por cantidad\n");
-    printf("4) Pico de visualizaciones\n");
-    printf("0) Finalizar\n");
-    scanf("%d",&Opcion);
-    printf("\n\n");
-    }
+    } while( opcion != 0 );
+
     return 0;
 }
