@@ -55,7 +55,7 @@
 1744	Elefante_blanco
 1759	El_Clan
 1767	La_Quietud
-1771	Bañeros_II,_la_playa_loca
+1771	Baneros_II,_la_playa_loca
 1790	Las_locuras_del_extraterrestre
 1802	Los_pilotos_mas_locos_del_mundo
 1810	Los_matamonstruos_en_la_mansion_del_terror

@@ -24,7 +24,7 @@ struct RankedPeli {
 };
 
 // Registro para guardar el dia con mas visualizaciones
-struct visXdia {
+struct VisXdia {
     char nombreDia[10];
     int vis;
 };
@@ -42,7 +42,7 @@ int contarDatos() {
         if(ch == '\n') lineas++;
     }
     fclose(ultdias);
-    
+
     return lineas;
 }
 
@@ -114,8 +114,9 @@ void swap(struct RankedPeli *a, struct RankedPeli *b) {
 
 // Implementacion de Bubble Sort para ordenar el ranking de mas a menos visualizaciones
 void bubbleSort(struct RankedPeli rank[]) {
+    int id_temp, vis_temp;
     for(int i = 0; i < 100; i++)
-        for(int j = 0; j < 100 - i; j++)
+        for(int j = 0; j < 100 - 1 - i; j++)
             if( rank[j].totVis < rank[j+1].totVis )
                 swap(&rank[j], &rank[j+1]);
 }
@@ -131,7 +132,7 @@ void GRABAR_TOP10(struct RankedPeli rankingTot[], struct Pelicula pelis[]) {
         // Escribo todo en el archivo
         fprintf(top10, "ID: %d\t|\tNombre: %s\t|\tVisualizaciones totales: %d\n", rankingTot[i].id, pelis[j].nombre, rankingTot[i].totVis);
     }
-    
+
     fclose(top10);
 }
 
@@ -139,7 +140,7 @@ void GRABAR_TOP10(struct RankedPeli rankingTot[], struct Pelicula pelis[]) {
 void RANKING(struct Pelicula pelis[], struct Datos7D ult7dias[], int cantDatos){
     struct RankedPeli rankingTot[100];
 
-    // Inicializo las visitas totales en 0
+    // Inicializo las visualizaciones totales en 0
     for(int i = 0; i < 100 ; i++)
         rankingTot[i].totVis = 0;
 
@@ -182,7 +183,7 @@ float VALORACION_PONDERADA(struct Datos7D ult7dias[], int cantDatos, int idPeli)
         valPond = sumaPond / (ponderacion * 1.0);
     else
         valPond = -1.0;
-    
+
     return valPond;
 }
 
@@ -203,7 +204,7 @@ void DIA_MAS(struct Datos7D ult7Dias[], int cantDatos) {
     for(int i = 1; i < 7; i++)
         if( dias[i].vis > visMax )
             visMax = dias[i].vis;
-    
+
     // Y ahora busco el dia al que corresponde dicho nro. de visualizaciones
     for(int i = 0; i < 7; i++)
         if( dias[i].vis == visMax ) {
@@ -241,20 +242,20 @@ int main() {
             // Opcion FINALIZAR seleccionada
             case 0:
                 break;
-            
+
             // Opcion RANKING Y TOP 10 seleccionada
             case 1: {
                 RANKING(pelis, ult7dias, cantDatos);
                 break;
             }
-            
+
             // Opcion VALORACION SEMANAL seleccionada
             case 2: {
                 int idPeli, peliExiste = 0;
                 float valPond;
                 printf("\nIngrese el ID de la pelicula cuya valoracion desea calcular: ");
                 scanf("%d", &idPeli);
-                
+
                 // Verifico que exista la pelicula en la base de datos
                 for(int i = 0; i < 100; i++)
                     if( idPeli == pelis[i].id ) {
@@ -265,6 +266,10 @@ int main() {
                 // Si existe, calculo y muestra la valoracion semanal
                 if( peliExiste ) {
                     valPond = VALORACION_PONDERADA(ult7dias, cantDatos, idPeli);
+                    if( valPond < 0 ) {
+                        printf("La pelicula no posee valoraciones.\n\n");
+                        break;
+                    }
                     printf("La valoracion semanal de la pelicula %d - ", idPeli);
                     for(int i = 0; i < 100; i++)
                         if( idPeli == pelis[i].id ) {
@@ -279,13 +284,13 @@ int main() {
 
                 break;
             }
-            
+
             // Opcion FILTRO POR CANTIDAD seleccionada
             case 3: {
                 int visMax, cantVis, ninguna = 1;
                 printf("Ingrese una cantidad de visualizaciones: ");
                 scanf("%d", &visMax);
-                
+
                 printf("Las siguientes peliculas superan las %d visualicaciones:\n", visMax);
                 for(int i = 0; i < 100 ; i++) {
                     cantVis = 0;
@@ -305,7 +310,7 @@ int main() {
                     printf("Ningun titulo fue visto tantas veces!\n\n");
                 else
                     printf("\n");
-                
+
                 break;
             }
 
