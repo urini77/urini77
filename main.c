@@ -63,7 +63,7 @@ void inicUlt7Dias(struct Datos7D ult7dias[]) {
 }
 
 // Inicializo los dias de la semana con su nombre correspondiente y las visualizaciones en 0
-void inicDias(struct visXdia dias[]) {
+void inicDias(struct VisXdia dias[]) {
     for(int i = 0; i < 7; i++) {
         dias[i].vis = 0;
         switch(i) {
@@ -130,7 +130,7 @@ void GRABAR_TOP10(struct RankedPeli rankingTot[], struct Pelicula pelis[]) {
         // Busco el nombre de la pelicula segun su ID
         for(j = 0; rankingTot[i].id != pelis[j].id; j++);
         // Escribo todo en el archivo
-        fprintf(top10, "ID: %d\t|\tNombre: %s\t|\tVisualizaciones totales: %d\n", rankingTot[i].id, pelis[j].nombre, rankingTot[i].totVis);
+        fprintf(top10, "ID: %5d  |  Nombre: %-60s  |  Visualizaciones totales: %6d\n", rankingTot[i].id, pelis[j].nombre, rankingTot[i].totVis);
     }
 
     fclose(top10);
@@ -158,7 +158,7 @@ void RANKING(struct Pelicula pelis[], struct Datos7D ult7dias[], int cantDatos){
     printf("--- RANKING ---\n\n");
     char vis[30];
     for(int i = 0; i < 100; i++) {
-        printf("ID: %5d  |  Visualizaciones: %5d\n", rankingTot[i].id, rankingTot[i].totVis);
+        printf("ID: %5d  |  Visualizaciones: %6d\n", rankingTot[i].id, rankingTot[i].totVis);
     }
     printf("\n");
 
@@ -189,7 +189,7 @@ float VALORACION_PONDERADA(struct Datos7D ult7dias[], int cantDatos, int idPeli)
 
 // Muestra en que dia de la semana hubo mas visualizaciones
 void DIA_MAS(struct Datos7D ult7Dias[], int cantDatos) {
-    struct visXdia dias[7];
+    struct VisXdia dias[7];
     inicDias(dias);
 
     // Relleno las visualizaciones por cada dia
@@ -301,7 +301,7 @@ int main() {
                     // Si superan la cantidad ingresada, muestro su nombre y sus visualizaciones
                     if( cantVis > visMax ) {
                         ninguna = 0;
-                        printf("%-60s|  %-8d\n", pelis[i].nombre, cantVis);
+                        printf("%-60s|  %8d\n", pelis[i].nombre, cantVis);
                     }
                 }
 
