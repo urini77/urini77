@@ -1,3 +1,13 @@
+/* Algoritmo:   Sistema de Recomendacion de Peliculas
+ *
+ * Co-autores:  Garcia Allarague, Frank
+ *              Garcia Torrano, Amadeo
+ *              Salomon, Uriel
+ *              Santillan, Alejandro
+ * 
+ * Ultima revision: 30-07-2021
+ */
+
 #include <stdio.h>
 #include <string.h>
 
@@ -6,7 +16,7 @@
 // Registro para guardar el ID de las pelculas y sus nombres correspondientes
 struct Pelicula {
     int id;
-    char nombre[60];
+    char titulo[60];
 };
 
 // Registro para guardar el ID, dia, cantidad de visualizaciones y valoracion de las peliculas
@@ -50,7 +60,7 @@ int contarDatos() {
 void inicPelis(struct Pelicula pelis[]) {
     FILE *peliculas = fopen("peliculas.txt", "r");
     for(int i = 0; !feof(peliculas); i++)
-        fscanf(peliculas, "%d %s", &pelis[i].id, pelis[i].nombre);
+        fscanf(peliculas, "%d %s", &pelis[i].id, pelis[i].titulo);
     fclose(peliculas);
 }
 
@@ -127,10 +137,10 @@ void GRABAR_TOP10(struct RankedPeli rankingTot[], struct Pelicula pelis[]) {
 
     int j;
     for(int i = 0; i < 10; i++) {
-        // Busco el nombre de la pelicula segun su ID
+        // Busco el titulo de la pelicula segun su ID
         for(j = 0; rankingTot[i].id != pelis[j].id; j++);
         // Escribo todo en el archivo
-        fprintf(top10, "ID: %5d  |  Nombre: %-60s  |  Visualizaciones totales: %6d\n", rankingTot[i].id, pelis[j].nombre, rankingTot[i].totVis);
+        fprintf(top10, "%d %s %d\n", rankingTot[i].id, pelis[j].titulo, rankingTot[i].totVis);
     }
 
     fclose(top10);
@@ -273,7 +283,7 @@ int main() {
                     printf("La valoracion semanal de la pelicula %d - ", idPeli);
                     for(int i = 0; i < 100; i++)
                         if( idPeli == pelis[i].id ) {
-                            printf("%s", pelis[i].nombre);
+                            printf("%s", pelis[i].titulo);
                             break;
                         }
                     printf(" es: %.1f\n\n", valPond);
@@ -298,10 +308,10 @@ int main() {
                     for(int j = 0; j < cantDatos; j++)
                         if( pelis[i].id == ult7dias[j].id )
                             cantVis += ult7dias[j].vis;
-                    // Si superan la cantidad ingresada, muestro su nombre y sus visualizaciones
+                    // Si superan la cantidad ingresada, muestro su titulo y sus visualizaciones
                     if( cantVis > visMax ) {
                         ninguna = 0;
-                        printf("%-60s|  %8d\n", pelis[i].nombre, cantVis);
+                        printf("%-60s|  %8d\n", pelis[i].titulo, cantVis);
                     }
                 }
 
